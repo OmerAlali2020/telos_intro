@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Telos — Intro Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F3EE;
+    --surface: #FFFFFF;
+    --border: #E2DDD6;
+    --text: #1A1814;
+    --muted: #8A857D;
+    --accent: #2D5F4F;
+    --accent-light: #EAF2EF;
+    --amber: #C47B2B;
+    --amber-light: #FDF3E3;
+    --red: #B84040;
+    --red-light: #FBF0F0;
+    --radius: 14px;
+    --script-url: '';
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; top: 1rem; left: 50%; transform: translateX(-50%) translateY(-80px);
+    background: var(--text); color: var(--bg); padding: 10px 20px;
+    border-radius: 20px; font-size: 13px; z-index: 9999;
+    transition: transform 0.3s ease; pointer-events: none;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── SCREENS ── */
+  .screen { display: none; flex-direction: column; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ── SETUP SCREEN ── */
+  #setup-screen {
+    align-items: center; justify-content: center; padding: 2rem 1.5rem; text-align: center;
+  }
+  .setup-logo {
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 3rem;
+  }
+  .setup-title { font-size: 26px; font-weight: 300; line-height: 1.3; margin-bottom: 0.5rem; }
+  .setup-sub { font-size: 14px; color: var(--muted); margin-bottom: 2.5rem; }
+  .setup-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 380px; text-align: right;
+  }
+  .setup-card label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .setup-card input {
+    width: 100%; padding: 10px 12px; font-size: 13px; font-family: 'DM Mono', monospace;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--bg);
+    color: var(--text); direction: ltr;
+  }
+  .setup-card input:focus { outline: none; border-color: var(--accent); }
+  .setup-hint { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .setup-btn {
+    width: 100%; margin-top: 1.25rem; padding: 13px; font-size: 14px; font-weight: 500;
+    background: var(--text); color: var(--bg); border: none; border-radius: 10px; cursor: pointer;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    padding: 1.25rem 1.25rem 0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+  .mode-badge {
+    font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 500;
+    background: var(--accent-light); color: var(--accent);
+  }
+  .mode-badge.friend-mode { background: var(--amber-light); color: var(--amber); }
+
+  /* ── FRIEND BANNER ── */
+  .friend-banner {
+    margin: 1rem 1.25rem 0;
+    background: var(--amber-light); border: 1px solid #F0D9B5;
+    border-radius: var(--radius); padding: 14px 16px;
+  }
+  .friend-banner p { font-size: 14px; color: var(--amber); line-height: 1.5; }
+  .friend-banner strong { font-weight: 500; }
+
+  /* ── MAIN CONTENT ── */
+  .main { flex: 1; padding: 1rem 1.25rem; }
+
+  /* ── ADMIN BAR ── */
+  .admin-bar {
+    display: flex; gap: 8px; margin-bottom: 1rem;
+  }
+  .add-btn {
+    flex: 1; padding: 11px 16px; font-size: 14px; font-weight: 500;
+    background: var(--text); color: var(--bg);
+    border: none; border-radius: var(--radius); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .settings-btn {
+    padding: 11px 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); cursor: pointer; font-size: 16px; color: var(--muted);
+  }
+
+  /* ── COMPANY CARD ── */
+  .company-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 10px; overflow: hidden;
+  }
+  .card-top { padding: 1rem 1.25rem 0.875rem; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .company-name { font-size: 16px; font-weight: 500; }
+  .company-industry { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .delete-btn {
+    width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
+    background: transparent; cursor: pointer; font-size: 14px; color: var(--muted);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .targets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .target-pill {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500;
+  }
+  .target-pill.ceo { background: #EEF2FF; color: #3D52B8; }
+  .target-pill.coo { background: var(--accent-light); color: var(--accent); }
+
+  /* ── INTROS SECTION ── */
+  .intros-section { border-top: 1px solid var(--border); }
+  .intro-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 1.25rem; border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+  .intro-item:last-child { border-bottom: none; }
+  .intro-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .intro-avatar {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--bg);
+    border: 1px solid var(--border); font-size: 11px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    color: var(--muted);
+  }
+  .intro-name { font-size: 13px; font-weight: 500; }
+  .intro-note { font-size: 11px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+  .level-pill {
+    font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 500; flex-shrink: 0;
+  }
+  .level-strong { background: var(--accent-light); color: var(--accent); }
+  .level-medium { background: var(--amber-light); color: var(--amber); }
+  .level-weak { background: #F4F4F4; color: var(--muted); }
+
+  /* ── ADD INTRO BTN ── */
+  .add-intro-row {
+    padding: 10px 1.25rem;
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+  }
+  .add-intro-row:hover { background: var(--bg); }
+  .add-intro-row span { font-size: 13px; color: var(--muted); }
+  .plus-icon {
+    width: 24px; height: 24px; border-radius: 50%; border: 1px dashed var(--border);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--muted);
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    padding: 3rem 1.5rem; text-align: center;
+  }
+  .empty-state p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  /* ── BOTTOM SHEET ── */
+  .sheet-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200;
+    align-items: flex-end; justify-content: center;
+  }
+  .sheet-overlay.open { display: flex; }
+  .sheet {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    padding: 0 1.25rem 2rem; width: 100%; max-width: 480px;
+    max-height: 90vh; overflow-y: auto;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 1.25rem; }
+  .sheet-title { font-size: 16px; font-weight: 500; margin-bottom: 1.25rem; }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 12px; font-size: 14px; font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg); color: var(--text);
+  }
+  .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+  .checkbox-row { display: flex; gap: 10px; }
+  .checkbox-item {
+    flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 10px;
+    display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px;
+  }
+  .checkbox-item input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); }
+  .sheet-submit {
+    width: 100%; padding: 13px; font-size: 15px; font-weight: 500;
+    background: var(--text); color: var(--bg); border: none; border-radius: 12px;
+    cursor: pointer; margin-top: 0.5rem;
+  }
+  .sheet-submit:disabled { opacity: 0.4; }
+  .sheet-cancel {
+    width: 100%; padding: 11px; font-size: 14px; background: transparent;
+    border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+    color: var(--muted); margin-top: 8px;
+  }
+
+  /* ── LOADING ── */
+  .loading-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(245,243,238,0.85);
+    z-index: 300; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 24px; height: 24px; border: 2px solid var(--border);
+    border-top-color: var(--text); border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-overlay p { font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+<div class="loading-overlay" id="loading"><div class="spinner"></div><p>טוען...</p></div>
+
+<!-- SETUP SCREEN -->
+<div class="screen active" id="setup-screen">
+  <div class="setup-logo">Telos</div>
+  <div class="setup-title">Intro Tracker</div>
+  <div class="setup-sub">הדבק את ה-URL של ה-Apps Script</div>
+  <div class="setup-card">
+    <label>Google Apps Script URL</label>
+    <input type="url" id="script-url-input" placeholder="https://script.google.com/macros/s/..." dir="ltr">
+    <div class="setup-hint">תקבל את ה-URL אחרי שתעשה Deploy ב-Apps Script.<br>הוא נשמר פעם אחת בדפדפן שלך.</div>
+    <button class="setup-btn" onclick="saveScriptUrl()">המשך</button>
+  </div>
+</div>
+
+<!-- ADMIN SCREEN -->
+<div class="screen" id="admin-screen">
+  <div class="app-header">
+    <div class="logo">Telos</div>
+    <div class="mode-badge">ניהול</div>
+  </div>
+  <div class="main">
+    <div class="admin-bar">
+      <button class="add-btn" onclick="openAddCompany()">+ הוסף חברה</button>
+      <button class="settings-btn" onclick="resetUrl()" title="שנה URL">⚙</button>
+    </div>
+    <div id="admin-list"></div>
+  </div>
+</div>
+
+<!-- FRIEND SCREEN -->
+<div class="screen" id="friend-screen">
+  <div class="app-header">
+    <div class="logo">Telos</div>
+    <div class="mode-badge friend-mode">חבר</div>
+  </div>
+  <div class="friend-banner">
+    <p>היי <strong id="friend-name-display"></strong> 👋<br>איפה יש לך קשרים? לחץ על חברה ותוסיף אינטרו.</p>
+  </div>
+  <div class="main">
+    <div id="friend-list"></div>
+  </div>
+</div>
+
+<!-- SHEET: Add Company -->
+<div class="sheet-overlay" id="company-sheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">חברה חדשה</div>
+    <div class="form-group"><label>שם החברה</label><input id="f-name" placeholder="למשל: Elbit Systems"></div>
+    <div class="form-group"><label>תעשייה</label><input id="f-industry" placeholder="למשל: ביטחון, תשתיות..."></div>
+    <div class="form-group">
+      <label>יעד קשר</label>
+      <div class="checkbox-row">
+        <label class="checkbox-item"><input type="checkbox" id="f-ceo" checked><span>CEO</span></label>
+        <label class="checkbox-item"><input type="checkbox" id="f-coo"><span>COO</span></label>
+        <label class="checkbox-item"><input type="checkbox" id="f-vp"><span>VP Ops</span></label>
+      </div>
+    </div>
+    <button class="sheet-submit" onclick="submitCompany()">הוסף חברה</button>
+    <button class="sheet-cancel" onclick="closeSheet('company-sheet')">ביטול</button>
+  </div>
+</div>
+
+<!-- SHEET: Add Intro -->
+<div class="sheet-overlay" id="intro-sheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="intro-sheet-title">הוסף אינטרו</div>
+    <div class="form-group" id="name-group"><label>שמך</label><input id="i-name" placeholder="שם מלא"></div>
+    <div class="form-group">
+      <label>רמת קרבה</label>
+      <select id="i-level">
+        <option value="strong">🟢 קרוב מאוד — יכול לקבוע פגישה</option>
+        <option value="medium">🟡 מכיר טוב — ווארם אינטרו</option>
+        <option value="weak">⚪ היכרות — מייל קר</option>
+      </select>
+    </div>
+    <div class="form-group"><label>הערה (אופציונלי)</label><input id="i-note" placeholder='למשל: חבר מהצבא של המנכ"ל'></div>
+    <button class="sheet-submit" onclick="submitIntro()">שמור</button>
+    <button class="sheet-cancel" onclick="closeSheet('intro-sheet')">ביטול</button>
+  </div>
+</div>
+
+<script>
+const SCRIPT_KEY = 'telos_script_url';
+const COMPANIES_KEY = 'telos_companies_cache';
+let SCRIPT_URL = localStorage.getItem(SCRIPT_KEY) || '';
+let companies = [];
+let currentCompanyId = null;
+let isFriendMode = false;
+let friendName = '';
+
+// ── INIT ──
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  friendName = params.get('friend') || '';
+
+  if (friendName) {
+    isFriendMode = true;
+    document.getElementById('friend-name-display').textContent = friendName;
+    // friend always needs the URL — get from param or localStorage
+    SCRIPT_URL = params.get('api') || SCRIPT_URL;
+    if (!SCRIPT_URL) { showSetup(); return; }
+    showScreen('friend-screen');
+    loadCompanies();
+  } else {
+    if (!SCRIPT_URL) { showSetup(); return; }
+    showScreen('admin-screen');
+    loadCompanies();
+  }
+}
+
+function showSetup() { showScreen('setup-screen'); }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── URL SETUP ──
+function saveScriptUrl() {
+  const val = document.getElementById('script-url-input').value.trim();
+  if (!val.startsWith('https://script.google.com')) {
+    toast('URL לא תקין'); return;
+  }
+  SCRIPT_URL = val;
+  localStorage.setItem(SCRIPT_KEY, val);
+  showScreen('admin-screen');
+  loadCompanies();
+}
+
+function resetUrl() {
+  localStorage.removeItem(SCRIPT_KEY);
+  SCRIPT_URL = '';
+  showSetup();
+}
+
+// ── API ──
+async function api(action, data = {}) {
+  const url = new URL(SCRIPT_URL);
+  url.searchParams.set('action', action);
+  Object.entries(data).forEach(([k, v]) => url.searchParams.set(k, v));
+
+  // GET for reads (CORS-friendly via no-cors workaround)
+  if (action === 'getCompanies' || action === 'getIntros') {
+    const res = await fetch(url.toString());
+    return res.json();
+  }
+
+  // POST for writes
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action, ...data }),
+    headers: { 'Content-Type': 'text/plain' }
+  });
+  return res.json();
+}
+
+// ── LOAD DATA ──
+async function loadCompanies() {
+  showLoading(true);
+  try {
+    const data = await api('getCompanies');
+    companies = data.companies || [];
+    const intros = data.intros || [];
+    companies.forEach(c => {
+      c.intros = intros.filter(i => i.company_id == c.id);
+    });
+    renderAll();
+  } catch(e) {
+    toast('שגיאה בטעינה — בדוק את ה-URL');
+    console.error(e);
+  }
+  showLoading(false);
+}
+
+// ── RENDER ──
+function renderAll() {
+  if (isFriendMode) renderFriend();
+  else renderAdmin();
+}
+
+function renderAdmin() {
+  const el = document.getElementById('admin-list');
+  if (!companies.length) {
+    el.innerHTML = '<div class="empty-state"><p>אין חברות עדיין.<br>לחץ על "הוסף חברה" כדי להתחיל.</p></div>';
+    return;
+  }
+  el.innerHTML = companies.map(c => companyCardHTML(c, false)).join('');
+}
+
+function renderFriend() {
+  const el = document.getElementById('friend-list');
+  if (!companies.length) {
+    el.innerHTML = '<div class="empty-state"><p>הרשימה ריקה כרגע.</p></div>';
+    return;
+  }
+  el.innerHTML = companies.map(c => companyCardHTML(c, true)).join('');
+}
+
+function companyCardHTML(c, friend) {
+  const targets = (c.targets || '').split(',').map(t => t.trim()).filter(Boolean);
+  const pills = targets.map(t =>
+    `<span class="target-pill ${t.toLowerCase()}">${t}</span>`
+  ).join('');
+
+  const introRows = (c.intros || []).map(i => {
+    const initials = i.friend_name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    const levelClass = { strong: 'level-strong', medium: 'level-medium', weak: 'level-weak' }[i.level] || 'level-weak';
+    const levelLabel = { strong: 'קרוב מאוד', medium: 'מכיר טוב', weak: 'היכרות' }[i.level] || i.level;
+    return `<div class="intro-item">
+      <div class="intro-left">
+        <div class="intro-avatar">${initials}</div>
+        <div>
+          <div class="intro-name">${i.friend_name}</div>
+          ${i.note ? `<div class="intro-note">${i.note}</div>` : ''}
+        </div>
+      </div>
+      <span class="level-pill ${levelClass}">${levelLabel}</span>
+    </div>`;
+  }).join('');
+
+  const addRow = `<div class="add-intro-row" onclick="openAddIntro(${c.id}, '${c.name}')">
+    <div class="plus-icon">+</div>
+    <span>${friend ? 'אני יכול לעשות אינטרו כאן' : 'הוסף אינטרו'}</span>
+  </div>`;
+
+  const deleteBtn = friend ? '' : `<button class="delete-btn" onclick="deleteCompany(${c.id})">×</button>`;
+
+  return `<div class="company-card">
+    <div class="card-top">
+      <div class="card-header">
+        <div>
+          <div class="company-name">${c.name}</div>
+          <div class="company-industry">${c.industry || ''}</div>
+        </div>
+        ${deleteBtn}
+      </div>
+      <div class="targets">${pills}</div>
+    </div>
+    <div class="intros-section">
+      ${introRows}
+      ${addRow}
+    </div>
+  </div>`;
+}
+
+// ── ADD COMPANY ──
+function openAddCompany() {
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-industry').value = '';
+  document.getElementById('f-ceo').checked = true;
+  document.getElementById('f-coo').checked = false;
+  document.getElementById('f-vp').checked = false;
+  openSheet('company-sheet');
+}
+
+async function submitCompany() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { toast('הכנס שם חברה'); return; }
+  const targets = [];
+  if (document.getElementById('f-ceo').checked) targets.push('CEO');
+  if (document.getElementById('f-coo').checked) targets.push('COO');
+  if (document.getElementById('f-vp').checked) targets.push('VP Ops');
+
+  showLoading(true);
+  try {
+    await api('addCompany', {
+      name,
+      industry: document.getElementById('f-industry').value.trim(),
+      targets: targets.join(',')
+    });
+    closeSheet('company-sheet');
+    await loadCompanies();
+    toast('חברה נוספה');
+  } catch(e) { toast('שגיאה בשמירה'); }
+  showLoading(false);
+}
+
+async function deleteCompany(id) {
+  if (!confirm('למחוק חברה זו?')) return;
+  showLoading(true);
+  try {
+    await api('deleteCompany', { id });
+    await loadCompanies();
+    toast('נמחק');
+  } catch(e) { toast('שגיאה'); }
+  showLoading(false);
+}
+
+// ── ADD INTRO ──
+function openAddIntro(companyId, companyName) {
+  currentCompanyId = companyId;
+  document.getElementById('intro-sheet-title').textContent = companyName;
+  document.getElementById('i-name').value = isFriendMode ? friendName : '';
+  document.getElementById('i-note').value = '';
+  document.getElementById('i-level').value = 'strong';
+
+  // hide name field for friend (pre-filled)
+  document.getElementById('name-group').style.display = isFriendMode ? 'none' : 'block';
+
+  openSheet('intro-sheet');
+}
+
+async function submitIntro() {
+  const name = isFriendMode ? friendName : document.getElementById('i-name').value.trim();
+  if (!name) { toast('הכנס שם'); return; }
+  showLoading(true);
+  try {
+    await api('addIntro', {
+      company_id: currentCompanyId,
+      friend_name: name,
+      level: document.getElementById('i-level').value,
+      note: document.getElementById('i-note').value.trim()
+    });
+    closeSheet('intro-sheet');
+    await loadCompanies();
+    toast('אינטרו נשמר!');
+  } catch(e) { toast('שגיאה בשמירה'); }
+  showLoading(false);
+}
+
+// ── SHEET HELPERS ──
+function openSheet(id) { document.getElementById(id).classList.add('open'); }
+function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.sheet-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ── TOAST ──
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── LOADING ──
+function showLoading(v) {
+  document.getElementById('loading').classList.toggle('show', v);
+}
+
+// ── SHARE LINK (admin) ──
+// Accessible from console: shareLink('Yoni Cohen')
+window.shareLink = function(name) {
+  const base = window.location.origin + window.location.pathname;
+  const url = `${base}?friend=${encodeURIComponent(name)}&api=${encodeURIComponent(SCRIPT_URL)}`;
+  navigator.clipboard.writeText(url).then(() => toast('לינק הועתק!')).catch(() => {
+    prompt('העתק את הלינק:', url);
+  });
+};
+
+init();
+</script>
+</body>
+</html>
