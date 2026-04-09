@@ -210,6 +210,15 @@
     cursor: pointer; margin-top: 0.5rem;
   }
   .sheet-submit:disabled { opacity: 0.4; }
+  .role-btn {
+    flex: 1; padding: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg); color: var(--muted); cursor: pointer;
+  }
+  .role-btn.active {
+    background: var(--accent-light); color: var(--accent);
+    border-color: var(--accent);
+  }
   .sheet-cancel {
     width: 100%; padding: 11px; font-size: 14px; background: transparent;
     border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
@@ -312,7 +321,17 @@
         <option value="weak">⚪ היכרות — מייל קר</option>
       </select>
     </div>
-    <div class="form-group"><label>הערה (אופציונלי)</label><input id="i-note" placeholder='למשל: חבר מהצבא של המנכ"ל'></div>
+    <div class="form-group">
+      <label>את מי אתה מכיר שם?</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px" id="role-btns">
+        <button type="button" class="role-btn active" onclick="selectRole(this,'CEO')">CEO</button>
+        <button type="button" class="role-btn" onclick="selectRole(this,'COO')">COO</button>
+        <button type="button" class="role-btn" onclick="selectRole(this,'other')">אחר</button>
+      </div>
+      <input id="i-contact-role-custom" placeholder="תפקיד / שם ספציפי" style="display:none">
+      <input type="hidden" id="i-contact-role" value="CEO">
+    </div>
+    <div class="form-group"><label>הערה (אופציונלי)</label><input id="i-note" placeholder='למשל: חבר מהצבא של המנכ&quot;ל'></div>
     <button class="sheet-submit" onclick="submitIntro()">שמור</button>
     <button class="sheet-cancel" onclick="closeSheet('intro-sheet')">ביטול</button>
   </div>
@@ -525,6 +544,23 @@ async function deleteCompany(id) {
   showLoading(false);
 }
 
+// ── ROLE BUTTONS ──
+function selectRole(btn, val) {
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const customInput = document.getElementById('i-contact-role-custom');
+  const hiddenInput = document.getElementById('i-contact-role');
+  if (val === 'other') {
+    customInput.style.display = 'block';
+    customInput.focus();
+    hiddenInput.value = '';
+    customInput.oninput = () => { hiddenInput.value = customInput.value; };
+  } else {
+    customInput.style.display = 'none';
+    hiddenInput.value = val;
+  }
+}
+
 // ── ADD INTRO ──
 function openAddIntro(companyId, companyName) {
   currentCompanyId = companyId;
@@ -532,6 +568,9 @@ function openAddIntro(companyId, companyName) {
   document.getElementById('i-name').value = isFriendMode ? friendName : '';
   document.getElementById('i-note').value = '';
   document.getElementById('i-level').value = 'strong';
+  document.querySelectorAll('.role-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.getElementById('i-contact-role').value = 'CEO';
+  document.getElementById('i-contact-role-custom').style.display = 'none';
 
   // hide name field for friend (pre-filled)
   document.getElementById('name-group').style.display = isFriendMode ? 'none' : 'block';
@@ -548,6 +587,7 @@ async function submitIntro() {
       company_id: currentCompanyId,
       friend_name: name,
       level: document.getElementById('i-level').value,
+      contact_role: document.getElementById('i-contact-role').value.trim(),
       note: document.getElementById('i-note').value.trim()
     });
     closeSheet('intro-sheet');
