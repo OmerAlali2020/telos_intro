@@ -340,7 +340,7 @@
 <script>
 const SCRIPT_KEY = 'telos_script_url';
 const COMPANIES_KEY = 'telos_companies_cache';
-let SCRIPT_URL = localStorage.getItem(SCRIPT_KEY) || '';
+let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDZCVbkc4XpMIMG6H0nrtbEXgQONn2KP-r9LlFo0WOs4SgGhLQh36htDXwE3mOhshbxg/exec';
 let companies = [];
 let currentCompanyId = null;
 let isFriendMode = false;
@@ -356,11 +356,11 @@ function init() {
     document.getElementById('friend-name-display').textContent = friendName;
     // friend always needs the URL — get from param or localStorage
     SCRIPT_URL = params.get('api') || SCRIPT_URL;
-    if (!SCRIPT_URL) { showSetup(); return; }
+    if (!SCRIPT_URL) { toast('שגיאה: אין Script URL'); return; }
     showScreen('friend-screen');
     loadCompanies();
   } else {
-    if (!SCRIPT_URL) { showSetup(); return; }
+    if (!SCRIPT_URL) { toast('שגיאה: אין Script URL'); return; }
     showScreen('admin-screen');
     loadCompanies();
   }
