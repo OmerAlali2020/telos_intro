@@ -96,6 +96,11 @@
   .level-medium { background: var(--amber-light); color: var(--amber); }
   .level-weak { background: #F4F4F4; color: var(--muted); }
 
+  .intro-summary {
+    padding: 10px 1.25rem; font-size: 13px; color: var(--accent);
+    background: var(--accent-light); display: flex; align-items: center; gap: 6px;
+  }
+  .intro-summary::before { content: '✓'; font-weight: 500; }
   .add-intro-row { padding: 10px 1.25rem; display: flex; align-items: center; gap: 8px; cursor: pointer; }
   .add-intro-row:hover { background: var(--bg); }
   .add-intro-row span { font-size: 13px; color: var(--muted); }
@@ -249,7 +254,6 @@
 <script>
 // ── CONFIG — החלף כאן את ה-URL שלך ──
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDZCVbkc4XpMIMG6H0nrtbEXgQONn2KP-r9LlFo0WOs4SgGhLQh36htDXwE3mOhshbxg/exec';
-
 let companies = [];
 let currentCompanyId = null;
 let isFriendMode = false;
@@ -329,22 +333,35 @@ function companyCardHTML(c, friend) {
     return `<span class="target-pill ${cls}">${t}</span>`;
   }).join('');
 
-  const introRows = (c.intros || []).map(i => {
-    const initials = i.friend_name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-    const levelClass = { strong: 'level-strong', medium: 'level-medium', weak: 'level-weak' }[i.level] || 'level-weak';
-    const levelLabel = { strong: 'קרוב מאוד', medium: 'מכיר טוב', weak: 'היכרות' }[i.level] || i.level;
-    const subline = [i.contact_role, i.note].filter(Boolean).join(' · ');
-    return `<div class="intro-item">
-      <div class="intro-left">
-        <div class="intro-avatar">${initials}</div>
-        <div>
-          <div class="intro-name">${i.friend_name}</div>
-          ${subline ? `<div class="intro-note">${subline}</div>` : ''}
+  let introRows = '';
+  if (!friend) {
+    introRows = (c.intros || []).map(i => {
+      const initials = i.friend_name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+      const levelClass = { strong: 'level-strong', medium: 'level-medium', weak: 'level-weak' }[i.level] || 'level-weak';
+      const levelLabel = { strong: 'קרוב מאוד', medium: 'מכיר טוב', weak: 'היכרות' }[i.level] || i.level;
+      const subline = [i.contact_role, i.note].filter(Boolean).join(' · ');
+      return `<div class="intro-item">
+        <div class="intro-left">
+          <div class="intro-avatar">${initials}</div>
+          <div>
+            <div class="intro-name">${i.friend_name}</div>
+            ${subline ? `<div class="intro-note">${subline}</div>` : ''}
+          </div>
         </div>
-      </div>
-      <span class="level-pill ${levelClass}">${levelLabel}</span>
-    </div>`;
-  }).join('');
+        <span class="level-pill ${levelClass}">${levelLabel}</span>
+      </div>`;
+    }).join('');
+  } else if (c.intros && c.intros.length) {
+    const count = c.intros.length;
+    const strong = c.intros.filter(i => i.level === 'strong').length;
+    const medium = c.intros.filter(i => i.level === 'medium').length;
+    const summary = strong > 0
+      ? `${strong} ${strong === 1 ? 'איש' : 'אנשים'} יכולים לקבוע פגישה ישירה`
+      : medium > 0
+      ? `${medium} ${medium === 1 ? 'איש' : 'אנשים'} יכולים לשלוח ווארם אינטרו`
+      : `${count} ${count === 1 ? 'איש' : 'אנשים'} יכולים לעזור`;
+    introRows = `<div class="intro-summary">${summary}</div>`;
+  }
 
   const addRow = `<div class="add-intro-row" onclick="openAddIntro(${c.id}, '${c.name.replace(/'/g,"\\'")}')">
     <div class="plus-icon">+</div>
